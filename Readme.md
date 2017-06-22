@@ -1,4 +1,4 @@
-Given a list of gene identifiers and a gene annotation in .gff3 format, tandem.sh uses bedtools closest to find neighbouring, and potentially overlapping, genes.
+Given a list of gene identifiers and a gene annotation in .gff3 format, tandem.sh uses bedtools closest to find neighbouring, and potentially overlapping, genes for each gene on the list.
 
 Requirements:
  - latest bedtools version
