@@ -4,7 +4,7 @@ Requirements:
  - latest bedtools version
 
 Usage:
-bash tandem.sh -o=<OUTPUT_PREFIX (default: tandem)> --min-overlap=<minimum number of overlapping bases, default: 0 - no overlap required> --max-distance=<maximum distance between neighbouring genes to be reported, default=100bp> <list_of_gene-ids> <annotation in gff3 format>
+bash tandem.sh -o=<OUTPUT_PREFIX (default: tandem)> --min-overlap=<minimum number of overlapping bases, default: 0 - no overlap required> --max-distance=<maximum distance between neighbouring genes to be reported, default=100bp> <list_of_gene-ids> <annotation_in_gff3-format>
 
 tandem.sh will generate 5 output files:
  - OUTPUT_PREFIX.FF.tsv
