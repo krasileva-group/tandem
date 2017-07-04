@@ -4,16 +4,16 @@ Requirements:
  - latest bedtools version
 
 Usage:
-bash tandem.sh -o=<OUTPUT_PREFIX (default: tandem)> --min-overlap=<minimum number of overlapping bases, default: 0 - no overlap required> --max-distance=<maximum distance between neighbouring genes to be reported, default=100bp> <list_of_gene-ids> <annotation_in_gff3-format>
+bash tandem.sh -k=<check k nearest neighbours, default: 2> -o=<OUTPUT_PREFIX (default: tandem)> --min-overlap=<minimum number of overlapping bases, default: 0 - no overlap required> --max-distance=<maximum distance between neighbouring genes to be reported, default=100bp> <list_of_gene-ids> <annotation_in_gff3-format>
 
 tandem.sh will generate 5 output files:
- - OUTPUT_PREFIX.FF.tsv
+ - OUTPUT_PREFIX.k<value of k>.FF.tsv
    Neighbouring/overlapping genes in forward/forward orientation
- - OUTPUT_PREFIX.RF.tsv
+ - OUTPUT_PREFIX.k<value of k>.RF.tsv
    Neighbouring/overlapping genes in reverse/forward orientation
- - OUTPUT_PREFIX.FR.tsv
+ - OUTPUT_PREFIX.k<value of k>.FR.tsv
    Neighbouring/overlapping genes in forward/reverse orientation
- - OUTPUT_PREFIX.RR.tsv
+ - OUTPUT_PREFIX.k<value of k>.RR.tsv
    Neighbouring/overlapping genes in reverse/reverse orientation
- - OUTPUT_PREFIX.full.tsv
-   Overlapping genes with one gene completely containing the other 
+ - OUTPUT_PREFIX.k<value of k>.full.tsv
+   Overlapping genes with one gene completely containing the other
