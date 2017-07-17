@@ -106,10 +106,12 @@ bedtools closest -d -k $K_NEAREST -a <(cat $OUT_FILE_PREFIX.query.gff3 | sort -k
   awk -v OFS='\t' -v min_ovl=$MIN_OVERLAP -v max_dst=$MAX_DISTANCE '{ if (((min_ovl <= -($19))||(min_ovl == 0 && $19 <= max_dst)) && ($4 != $13 && $5 != $14)) {
                                                                        split($9, info1, ";");
                                                                        split($18, info2, ";");
-                                                                       if ($4 <= $13) {
+                                                                       if ($4 < $13 || ($13 == $4 && $5 < $14)) {
                                                                          print $1,$4,$5,$7,$13,$14,$16,substr(info1[1], 4),substr(info2[1], 4),$19;
-                                                                       } else {
+                                                                       } else if ($13 < $4 || ($13 == $4 && $5 > $14)) {
                                                                          print $1,$13,$14,$16,$4,$5,$7,substr(info2[1], 4),substr(info1[1], 4),$19;
+                                                                       } else {
+                                                                         next;
                                                                        }
                                                                       }
                                                                     }' > $OUT_FILE_PREFIX.tmp.tsv
@@ -119,14 +121,83 @@ bedtools closest -d -k $K_NEAREST -a <(cat $OUT_FILE_PREFIX.query.gff3 | sort -k
 
 # 1     2       3       4       5       6       7       8                       9                       10
 # Chr2	7410835	7415610	-	7409063	7409582	+	AT2G17050.TAIR10	AT2G17043.TAIR10	1253
-awk -v OFS='\t' '{ is_overlap=($10 < 0)?1:0; is_tandem=($3 < $5)?1:0; if ($4$7 == "++" && (is_overlap==1 || is_tandem==1)) print $0 }' $OUT_FILE_PREFIX.tmp.tsv | sort -u > $OUT_FILE_PREFIX.FF.tsv
-awk -v OFS='\t' '{ is_overlap=($10 < 0)?1:0; is_tandem=($3 < $5)?1:0; if ($4$7 == "--" && (is_overlap==1 || is_tandem==1)) print $0 }' $OUT_FILE_PREFIX.tmp.tsv | sort -u > $OUT_FILE_PREFIX.RR.tsv
-awk -v OFS='\t' '{ is_overlap=($10 < 0)?1:0; is_tandem=($3 < $5)?1:0; if ($4$7 == "+-" && (is_overlap==1 || is_tandem==1)) print $0 }' $OUT_FILE_PREFIX.tmp.tsv | sort -u > $OUT_FILE_PREFIX.FR.tsv
-awk -v OFS='\t' '{ is_overlap=($10 < 0)?1:0; is_tandem=($3 < $5)?1:0; if ($4$7 == "-+" && (is_overlap==1 || is_tandem==1)) print $0 }' $OUT_FILE_PREFIX.tmp.tsv | sort -u > $OUT_FILE_PREFIX.RF.tsv
-awk -v OFS='\t' '{ is_overlap=($10 < 0)?1:0; if (is_overlap==1 && (($2 >= $5 && $3 <= $6) || ($5 >= $2 && $6 <= $3))) print $0; }' $OUT_FILE_PREFIX.tmp.tsv | sort -u > $OUT_FILE_PREFIX.full.tsv
+awk -v OFS='\t' \
+ ' BEGIN { oritype["++"] = "FF"; oritype["--"] = "RR"; oritype["+-"] = "FR"; oritype["-+"] = "RF"; }
+   { is_overlap = ($10 < 0)?1:0;
+     is_tandem = ($3 < $5)?1:0;
+     is_full = (is_overlap && $2 <= $5 && $6 <= $3)?1:0;
+     ori = oritype[$4$7];
+     rel = "NONE";
+     if (is_tandem == "1") { 
+       rel = "TANDEM"; 
+     } else if (is_overlap == 1 && is_full == 0) {
+       rel = "PARTIAL";
+     } else if (is_full == 1) {
+       rel = "FULL";
+     }
+     if (rel != "NONE") print $0,ori,rel; }' $OUT_FILE_PREFIX.tmp.tsv > $OUT_FILE_PREFIX.tmp.rel.tsv
+
+grep -w FF $OUT_FILE_PREFIX.tmp.rel.tsv | grep -v -w FULL | cut -f 1-10 | sort -u > $OUT_FILE_PREFIX.FF.tsv
+grep -w RR $OUT_FILE_PREFIX.tmp.rel.tsv | grep -v -w FULL | cut -f 1-10 | sort -u > $OUT_FILE_PREFIX.RR.tsv
+grep -w FR $OUT_FILE_PREFIX.tmp.rel.tsv | grep -v -w FULL | cut -f 1-10 | sort -u > $OUT_FILE_PREFIX.FR.tsv
+grep -w RF $OUT_FILE_PREFIX.tmp.rel.tsv | grep -v -w FULL | cut -f 1-10 | sort -u > $OUT_FILE_PREFIX.RF.tsv
+grep -w FULL $OUT_FILE_PREFIX.tmp.rel.tsv | cut -f 1-10 | sort -u > $OUT_FILE_PREFIX.full.tsv
+
+#awk -v OFS='\t' '{ is_overlap=($10 < 0)?1:0; is_tandem=($3 < $5)?1:0; if ($4$7 == "++" && (is_overlap==1 || is_tandem==1)) print $0 }' $OUT_FILE_PREFIX.tmp.tsv | sort -u > $OUT_FILE_PREFIX.FF.tsv
+#awk -v OFS='\t' '{ is_overlap=($10 < 0)?1:0; is_tandem=($3 < $5)?1:0; if ($4$7 == "--" && (is_overlap==1 || is_tandem==1)) print $0 }' $OUT_FILE_PREFIX.tmp.tsv | sort -u > $OUT_FILE_PREFIX.RR.tsv
+#awk -v OFS='\t' '{ is_overlap=($10 < 0)?1:0; is_tandem=($3 < $5)?1:0; if ($4$7 == "+-" && (is_overlap==1 || is_tandem==1)) print $0 }' $OUT_FILE_PREFIX.tmp.tsv | sort -u > $OUT_FILE_PREFIX.FR.tsv
+#awk -v OFS='\t' '{ is_overlap=($10 < 0)?1:0; is_tandem=($3 < $5)?1:0; if ($4$7 == "-+" && (is_overlap==1 || is_tandem==1)) print $0 }' $OUT_FILE_PREFIX.tmp.tsv | sort -u > $OUT_FILE_PREFIX.RF.tsv
+#awk -v OFS='\t' '{ is_overlap=($10 < 0)?1:0; if (is_overlap==1 && (($2 >= $5 && $3 <= $6) || ($5 >= $2 && $6 <= $3))) print $0; }' $OUT_FILE_PREFIX.tmp.tsv | sort -u > $OUT_FILE_PREFIX.full.tsv
 
 
 if [[ "$DO_CLEANUP" -eq 1 ]]; then
   rm $OUT_FILE_PREFIX.query.gff3
   rm $OUT_FILE_PREFIX.tmp.tsv
+  rm $OUT_FILE_PREFIX.tmp.rel.tsv
 fi
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#  awk -v OFS='\t' -v min_ovl=$MIN_OVERLAP -v max_dst=$MAX_DISTANCE \
+#   '{
+#      if ($4 != $13 || $5 != $14) {       
+#        if ($4 < $13) {
+#          if ($5 < $14) {
+#            $19 = -($5 - $13 + 1);
+#            otype = "partial";
+#          } else {
+#            $19 = -($14 - $13 + 1);
+#            otype = "full";
+#          }          
+#        } else if ($13 < $4) {
+#          if ($14 < $5) {
+#            $19 = -($14 - $4 + 1);
+#            otype = "partial";
+#          } else {
+#            $19 = -($5 - $4 + 1);
+#            otype = "full";
+#          }
+#        } else { 
+#          otype = "partial";
+#          if ($5 < $14) {
+#            $19 = -($5 - $4 + 1);            
+#          } else if ($14 < $5) {
+#            $19 = -($14 - $13 + 1)
+#          }
+#        } 
+#      }
+#    }'
+#
