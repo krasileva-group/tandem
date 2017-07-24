@@ -49,10 +49,10 @@ done
 
 OUT_FILE_PREFIX="${OUT_FILE_PREFIX}.k${K_NEAREST}"
 
-echo "MIN_OVERLAP=${MIN_OVERLAP}"
-echo "MAX_DISTANCE=${MAX_DISTANCE}"
-echo "K_NEAREST=${K_NEAREST}"
-echo "OUT_FILE_PREFIX=${OUT_FILE_PREFIX}"
+#echo "MIN_OVERLAP=${MIN_OVERLAP}"
+#echo "MAX_DISTANCE=${MAX_DISTANCE}"
+#echo "K_NEAREST=${K_NEAREST}"
+#echo "OUT_FILE_PREFIX=${OUT_FILE_PREFIX}"
 
 #flags=$(($min_overlap_set+$max_distance_set))
 #echo "FLAGS=$flags"
